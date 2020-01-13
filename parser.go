@@ -957,7 +957,15 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			},
 		}
 
-		if nestStruct, ok := field.Type.(*ast.StarExpr); ok {
+		var (
+			structTag         reflect.StructTag
+			hasSwaggerTypeTag = false
+		)
+		if field.Tag != nil {
+			structTag = reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
+			hasSwaggerTypeTag = structTag.Get("swaggertype") != ""
+		}
+		if nestStruct, ok := field.Type.(*ast.StarExpr); ok && !hasSwaggerTypeTag {
 			schema, err := parser.parseTypeExpr(pkgName, structField.schemaType, nestStruct.X)
 			if err != nil {
 				return nil, nil, err
